@@ -1,4 +1,3 @@
-
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from Bio import SeqIO
@@ -8,9 +7,14 @@ import os
 import re
 import csv
 
+# Kat & Avery, 2023
+
 # Distinguishing portion of .fastq file name
 # sample_names = ["52639.4.404742.AAGAGCCA-AAGAGCCA", "52639.4.404742.AGAAGCGT-AGAAGCGT", "52639.4.404742.ATGGTCCA-ATGGTCCA", "52639.4.404742.CCAAGCAA-CCAAGCAA",
 # "52639.4.404742.CCATACGT-CCATACGT", "52639.4.404742.GTCTAGGT-GTCTAGGT", "52639.4.404742.TAACCGGT-TAACCGGT", "52639.4.404742.TATTCGCC-TATTCGCC", "52639.4.404742.TGTACCGT-TGTACCGT", "52639.4.404742.TTGAGGCA-TTGAGGCA", "52639.4.404742.TTGGACGT-TTGGACGT"]
+
+def main():
+    pass
 
 os.chdir("./cache")
 sample_names = ["10k_1"]

@@ -4,8 +4,7 @@ Estimates population size of fosmid pools
 ```
 singularity build foswalk.sif docker://quay.io/hallam_lab/fosmid-walk
 
-singularity run -B <workspace>:/ws foswalk.sif
-foswalk -r /ws/<fosmid_read_file>.fq -o /ws/<output_folder>
+singularity run -B <workspace>:/ws foswalk.sif foswalk -r /ws/<fosmid_read_file>.fq -o /ws/<output_folder>
 
 ```
 

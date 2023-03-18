@@ -1,4 +1,10 @@
 __pycache__
 cache
+*.egg-info
+*.whl
+*.sif
 
 /docker/lib
+/build
+/lib
+/dist

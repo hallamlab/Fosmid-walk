@@ -5,6 +5,9 @@ RUN mamba create --no-default-packages --yes \
     -n ${CONDA_ENV} -c bioconda -c conda-forge \
     python=3.11 bwa samtools biopython \
     && mamba clean -afy
+ENV PATH /opt/conda/envs/${CONDA_ENV}/bin:${PATH}
+COPY ./load /app
+RUN pip install /app/*.whl
 
 # Singularity uses tini, but raises warnings
 # we set it up here correctly for singularity

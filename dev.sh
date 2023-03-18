@@ -18,7 +18,8 @@ case $1 in
     --build|-b)
         # change the url in python if not txyliu
         # build the docker container locally *with the cog db* (see above)
-        cd docker 
+        cp -r dist/* docker/load
+        cd docker
         docker build -t $DOCKER_IMAGE .
     ;;
     --push|-p)
@@ -28,7 +29,8 @@ case $1 in
     ;;
     --sif)
         # test build singularity
-        singularity build $2/$NAME.sif docker-daemon://$DOCKER_IMAGE:latest
+        mkdir -p $HERE/scratch
+        singularity build $HERE/scratch/$NAME.sif docker-daemon://$DOCKER_IMAGE:latest
     ;;
     --run|-r)
         # test run docker image
@@ -40,8 +42,30 @@ case $1 in
             $DOCKER_IMAGE \
             /bin/bash
     ;;
+    --pip-setup)
+        # make an environment before hand
+        # in that env, install these build tools
+        pip install build
+    ;;
+    --pip-build|-l)
+        # build the packge for container
+        # this is NOT suitable for pypi because of poorly handled dependencies
+        rm -r build && rm -r dist
+        python -m build --wheel
+    ;;
+    --pip-remove|-x)
+        pip uninstall $NAME -y
+    ;;
     -t)
-        echo "x"
+        shift
+        # test run docker image
+        docker run -it --rm \
+            -e XDG_CACHE_HOME="/ws"\
+            --mount type=bind,source="$HERE/src/fosmid_walk",target="/opt/conda/envs/main/lib/python3.11/site-packages/fosmid_walk" \
+            --mount type=bind,source="$HERE/scratch/cache",target="/ws" \
+            --workdir="/ws" \
+            -u $(id -u):$(id -g) \
+            $DOCKER_IMAGE foswalk $@
     ;;
     *)
         echo "bad option"

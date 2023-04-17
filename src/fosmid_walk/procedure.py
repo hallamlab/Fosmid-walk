@@ -1,12 +1,12 @@
-import shutil
 from Bio import SeqIO
 import uuid
 from pathlib import Path
+import json
 
 import subprocess
 import os
-import re
-import csv
+
+from numpy import record
 
 # Avery, Kat, and Tony, 2023
 
@@ -51,64 +51,82 @@ def estimate(
         subprocess.call([str('samtools fasta '+'020-rev.bam > '+'020-rev.fasta')], shell = True)
 
         fwd = SeqIO.parse(str('020-fwd.fasta'), "fasta")
-        rev = SeqIO.parse(str('020-rev.fasta'), "fasta")
         recs = []
         for f in fwd:
-            recs.append(f)
+            recs.append((True, f))
 
+        rev = SeqIO.parse(str('020-rev.fasta'), "fasta")
         for r in rev:
             rev_r = r.seq.reverse_complement()
             r.seq = rev_r
-            recs.append(r)
+            recs.append((False, r))
 
+        kept_indicies = []
         final_recs = []
-        for rec in recs:
-            if BACKBONE_SIGNATURE in rec.seq: # first n nt in vector backbone
-                new_seq = rec.seq[:str(rec.seq).index(BACKBONE_SIGNATURE)]
-                if len(new_seq) >= 100:
-                    trim_seq = new_seq[len(new_seq)-100:len(new_seq)]
-                    rec.seq = trim_seq
-                    final_recs.append(rec)
+        hit_lens = []
+        CUT = 100
+        for i, (is_fwd, rec) in enumerate(recs):
+            if BACKBONE_SIGNATURE not in rec.seq: continue
+            new_seq = rec.seq[:rec.seq.index(BACKBONE_SIGNATURE)]
+            hit_lens.append(len(new_seq))
+            if len(new_seq) >= CUT:
+                trim_seq = new_seq[len(new_seq)-CUT:len(new_seq)]
+                final_recs.append((is_fwd, trim_seq))
+                kept_indicies.append(i)
         assert len(final_recs)>0, "no hits to vector backbone"
-        SeqIO.write(final_recs, str(f'{BACKBONE}-5-020.fasta'), "fasta")
+        with open(f'{BACKBONE}-5-020.fasta', 'w') as f:
+            for i, (is_fwd, seq) in enumerate(final_recs):
+                f.write(f">{i}\n{seq}\n")
 
-        uclust_cmd = ["usearch",
-                    "-cluster_fast", f"{BACKBONE}-5-020.fasta",
-                    "-uc", f"{BACKBONE}-5-020.uc",
-                    "-id", str(0.9),
-                    "-consout", f"{BACKBONE}-5-020_clusters.fasta",
-                    "-sizeout",
-                    "-centroids", f"{BACKBONE}-5-020_centroids.fasta",
-                    "-minsize", str(2),
-                    ]
+        with open(out_dir.joinpath("stats.json"), "w") as j:
+            json.dump({
+                "hit_count": len(hit_lens),
+                "hits_kept": len(final_recs),
+                "hit_lengths": hit_lens,
+            }, j)
+
+        uclust_cmd = [
+            "usearch",
+            "-cluster_fast", f"{BACKBONE}-5-020.fasta",
+            "-uc", f"{BACKBONE}-5-020.uc",
+            "-id", str(0.9),
+            "-consout", f"{BACKBONE}-5-020_clusters.fasta",
+            "-sizeout",
+            "-centroids", f"{BACKBONE}-5-020_centroids.fasta",
+            "-minsize", str(2),
+        ]
         if threads is not None:
             print(f"\nusing {threads} threads for usearch")
             uclust_cmd+= ["-threads", threads]
         subprocess.call(' '.join(uclust_cmd), shell = True)
 
-        final_output = []
-        clusters = SeqIO.parse(str(f'{BACKBONE}-5-020_clusters.fasta'), "fasta")
-        size_ones = 0
-        for c in clusters:
-            if "size=1;" not in c.id:
-                cluster = re.findall(r'\w+', c.id)[0]
-                size = re.findall(r'(?<=size\=)\w+', c.id)[0]
-                output_row = [cluster, size, c.seq]
-                final_output.append(output_row)
-            else:
-                size_ones += 1
-
-        total = size_ones + len(final_output)
-        print(f"""\
-            {total} clusters resolved, but {size_ones} had only 1 member.
-            This leaves {total-size_ones} results
-        """.replace("  ", ""))
-
         os.makedirs(out_dir, exist_ok=True)
-        with open(out_dir.joinpath(f'{sample_name}_foswalk.csv'), 'w') as writeFile:
-            writer = csv.writer(writeFile)
-            writer.writerow(['Cluster', 'Size', 'Sequence'])
-            writer.writerows(final_output)
+        final_output =  open(out_dir.joinpath(f'{sample_name}_full.fasta'), 'w')
+        hits =          open(out_dir.joinpath(f'{sample_name}_hits.fasta'), 'w')
+        try:
+            centroids = SeqIO.parse(str(f'{BACKBONE}-5-020_centroids.fasta'), "fasta")
+            size_ones, total = 0, 0
+            for c in centroids:
+                id, size, _ = c.id.split(";")
+                id = int(id)
+                rev, original = recs[kept_indicies[id]]
+                header = f">{original.id};{'forward' if not rev else 'reverse_compliment'};{size}"
+                final_output.write(f"{header}\n{original.seq}\n")
+                hits.write(f"{header}\n{c.seq}\n")
+
+                total += 1
+                if size == "size=1":
+                    size_ones += 1
+
+            total = size_ones + total
+            print(f"""\
+                {total} clusters resolved and {size_ones} had only 1 member.
+                This leaves {total-size_ones} results
+            """.replace("  ", ""))
+        finally:
+            final_output.close()
+            hits.close()
+
     finally:
         # shutil.rmtree(Path("./").absolute())
         pass

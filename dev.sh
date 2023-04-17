@@ -65,7 +65,10 @@ case $1 in
             --mount type=bind,source="$HERE/scratch/cache",target="/ws" \
             --workdir="/ws" \
             -u $(id -u):$(id -g) \
-            $DOCKER_IMAGE foswalk $@
+            $DOCKER_IMAGE \
+                foswalk -r /ws/inputs/lake-test.fastq \
+                -o /ws/testout \
+                -t 12 -b /ws/inputs/bb.fasta
     ;;
     *)
         echo "bad option"

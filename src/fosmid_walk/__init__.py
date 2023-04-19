@@ -50,30 +50,7 @@ def main():
     if args.b: backbone = check_file(args.b, ".fasta, .fa".split(', '))
     if backbone: args_to_pass["backbone"] = backbone
 
-    if args.o: args_to_pass["temp_dir"] = Path(args.temp_dir)
+    if args.temp_dir: args_to_pass["temp_dir"] = Path(args.temp_dir)
     if args.t: args_to_pass["threads"] = args.t
 
     estimate(**args_to_pass)
-
-
-    # if not os.path.exists(args.r) or os.path.isfile:
-    #     return
-    # os.makedirs(args.o, exist_ok=True)
-    # ref_path = os.path.abspath(args.r)
-    # out_path = os.path.abspath(args.o)
-
-    # subsample = min(1, args.s)
-
-    # cmd = f"""\
-    #     snakemake -s /app/main.smk --configfile /app/config.yaml -d /ws\
-    #         {"-n" if args.mock else ""} \
-    #         --config sample={args.i} ss={subsample} \
-    #         --keep-going --keep-incomplete --cores {args.t}"""
-
-    # print_header()
-    # if os.path.exists(f'{ref_path}/{IMAGE}.sif'):
-    #     success = 0==shell_singularity(ref_path, out_path, cmd)
-    # else:
-    #     success = 0==shell_docker(ref_path, out_path, cmd)
-    # if success and not args.mock:
-    #     print(f"{LINE}\nsubsample rate: {args.s}\nfinal output at\n{out_path}/{args.i}/diamond/")

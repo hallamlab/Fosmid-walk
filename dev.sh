@@ -1,5 +1,5 @@
 NAME=fosmid-walk
-DOCKER_IMAGE=quay.io/hallam_lab/$NAME
+DOCKER_IMAGE=quay.io/hallamlab/$NAME
 echo image: $DOCKER_IMAGE
 echo ""
 

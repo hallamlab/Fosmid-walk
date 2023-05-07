@@ -78,7 +78,7 @@ def estimate(
             for i, (is_fwd, seq) in enumerate(final_recs):
                 f.write(f">{i}\n{seq}\n")
 
-        with open(out_dir.joinpath("stats.json"), "w") as j:
+        with open(out_dir.joinpath(f"{sample_name}.json"), "w") as j:
             json.dump({
                 "hit_count": len(hit_lens),
                 "hits_kept": len(final_recs),
@@ -101,7 +101,7 @@ def estimate(
         subprocess.call(' '.join(uclust_cmd), shell = True)
 
         os.makedirs(out_dir, exist_ok=True)
-        final_output =  open(out_dir.joinpath(f'{sample_name}_full.fasta'), 'w')
+        final_output =  open(out_dir.joinpath(f'{sample_name}_original.fasta'), 'w')
         hits =          open(out_dir.joinpath(f'{sample_name}_hits.fasta'), 'w')
         try:
             centroids = SeqIO.parse(str(f'{BACKBONE}-5-020_centroids.fasta'), "fasta")

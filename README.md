@@ -3,6 +3,7 @@ Estimates population size of fosmid pools
 
 Credit to [Avery Noonan](https://scholar.google.ca/citations?user=3mTbEjQAAAAJ&hl=en) and [Kateryna Ievdokymenko](https://scholar.google.ca/citations?user=_WzHYD4AAAAJ&hl=en).
 
+depreciated: now integrated into [Fabfos](https://github.com/hallamlab/Fabfos)
 ```
 singularity build foswalk.sif docker://quay.io/hallam_lab/fosmid-walk
 
